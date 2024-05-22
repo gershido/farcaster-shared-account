@@ -40,9 +40,7 @@ app.frame("/shared-account/:user/:hash", async (c) => {
 
   const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
 
-  log.info(
-    `route: ${frameData?.url}, fid: ${frameData?.fid}, castId-fid: ${frameData?.castId.fid}, castId-hash: ${frameData?.castId.hash}, address: ${frameData?.address}`
-  );
+  log.info(`frame data: ${JSON.stringify(frameData)}`);
 
   try {
     const { cast } = await client.lookUpCastByHashOrWarpcastUrl(
