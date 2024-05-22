@@ -3,6 +3,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Button, Frog, TextInput } from "frog";
 import { devtools } from "frog/dev";
 import { neynar } from "frog/hubs";
+import log from "./log";
 import "dotenv/config";
 
 export const app = new Frog({
@@ -13,6 +14,10 @@ app.use("/*", serveStatic({ root: "./public" }));
 
 app.frame("/", (c) => {
   const { frameData } = c;
+
+  log.info(
+    `route: ${frameData?.url}, fid: ${frameData?.fid}, castId-fid: ${frameData?.castId.fid}, castId-hash: ${frameData?.castId.hash}, address: ${frameData?.address}`
+  );
 
   return c.res({
     image: (
