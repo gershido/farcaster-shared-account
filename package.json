@@ -18,5 +18,8 @@
   "devDependencies": {
     "@types/node": "^20.11.17",
     "tsx": "^4.10.5"
+  },
+  "engines": {
+    "node": ">=19.9.0"
   }
 }
