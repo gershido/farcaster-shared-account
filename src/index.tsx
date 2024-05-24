@@ -8,6 +8,7 @@ import {
   isApiErrorResponse,
   CastParamType,
 } from "@neynar/nodejs-sdk";
+import { PrismaClient } from "@prisma/client";
 import log from "./log";
 import "dotenv/config";
 
@@ -39,7 +40,6 @@ app.frame("/", async (c) => {
 });
 
 app.frame("/select", async (c) => {
-  console.log("here");
   const { frameData } = c;
 
   if (frameData === undefined || frameData.inputText === undefined) {
@@ -66,10 +66,10 @@ app.frame("/select", async (c) => {
     return c.res({
       image: (
         <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Shared Account
+          Shared Account: {sharedAccount.username}
         </div>
       ),
-      intents: [<Button value="like">Like</Button>],
+      intents: [<Button value="continue">Continue</Button>],
     });
   } catch (error) {
     if (isApiErrorResponse(error)) {
