@@ -69,7 +69,109 @@ app.frame("/select", async (c) => {
           Shared Account: {sharedAccount.username}
         </div>
       ),
-      intents: [<Button value="continue">Continue</Button>],
+      intents: [
+        <Button
+          value="continue"
+          action={`/shared-account/${sharedAccount.username}`}
+        >
+          Continue
+        </Button>,
+      ],
+    });
+  } catch (error) {
+    if (isApiErrorResponse(error)) {
+      log.info("API Error", error.response.data);
+    } else {
+      log.info("Generic Error", error);
+    }
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Error
+        </div>
+      ),
+      intents: [],
+    });
+  }
+});
+
+app.frame("/shared-account/:name", async (c) => {
+  const { frameData } = c;
+  const sharedAccountName = c.req.param("name");
+
+  log.info(`frame data: ${JSON.stringify(frameData)}`);
+
+  const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
+
+  try {
+    const { result } = await client.lookupUserByUsername(sharedAccountName);
+    const { user: sharedAccount } = result;
+
+    log.info(`sharedAccount: ${JSON.stringify(sharedAccount)}`);
+
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Shared Account: {sharedAccount.username}
+        </div>
+      ),
+      intents: [
+        <Button
+          value="register"
+          action={`/shared-account/${sharedAccount.username}/register/${frameData?.fid}`}
+        >
+          Register
+        </Button>,
+      ],
+    });
+  } catch (error) {
+    if (isApiErrorResponse(error)) {
+      log.info("API Error", error.response.data);
+    } else {
+      log.info("Generic Error", error);
+    }
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Error
+        </div>
+      ),
+      intents: [],
+    });
+  }
+});
+
+app.frame("/shared-account/:name/register/:user", async (c) => {
+  const { frameData } = c;
+  const sharedAccountName = c.req.param("name");
+  const userFid = c.req.param("user");
+
+  log.info(`frame data: ${JSON.stringify(frameData)}`);
+
+  const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
+
+  try {
+    const { result: sharedAccountResult } = await client.lookupUserByUsername(
+      sharedAccountName
+    );
+    const { user: sharedAccount } = sharedAccountResult;
+
+    const { users: userToRegisterResult } = await client.fetchBulkUsers([
+      Number(userFid),
+    ]);
+    const userToRegister = userToRegisterResult[0];
+
+    log.info(`sharedAccount: ${JSON.stringify(sharedAccount)}`);
+    log.info(`userToRegister: ${JSON.stringify(userToRegister)}`);
+
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Shared Account: {sharedAccount.username}
+          User to register: {userToRegister.username}
+        </div>
+      ),
+      intents: [<Button value="claim">Claim</Button>],
     });
   } catch (error) {
     if (isApiErrorResponse(error)) {
