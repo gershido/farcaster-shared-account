@@ -3,13 +3,12 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Button, Frog, TextInput } from "frog";
 import { devtools } from "frog/dev";
 import { neynar } from "frog/hubs";
-import {
-  NeynarAPIClient,
-  isApiErrorResponse,
-  CastParamType,
-} from "@neynar/nodejs-sdk";
+import { isApiErrorResponse, CastParamType } from "@neynar/nodejs-sdk";
 import { PrismaClient } from "@prisma/client";
 import log from "./log";
+import neynarClient from "./neynar";
+import { getMetadata } from "./utils";
+import { HATS_FARCASTER_DELEGATOR_ABI } from "./constants";
 import "dotenv/config";
 
 export const app = new Frog({
@@ -55,10 +54,10 @@ app.frame("/select", async (c) => {
 
   log.info(`frame data: ${JSON.stringify(frameData)}`);
 
-  const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
-
   try {
-    const { result } = await client.lookupUserByUsername(frameData.inputText);
+    const { result } = await neynarClient.lookupUserByUsername(
+      frameData.inputText
+    );
     const { user: sharedAccount } = result;
 
     log.info(`sharedAccount: ${JSON.stringify(sharedAccount)}`);
@@ -101,10 +100,10 @@ app.frame("/shared-account/:name", async (c) => {
 
   log.info(`frame data: ${JSON.stringify(frameData)}`);
 
-  const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
-
   try {
-    const { result } = await client.lookupUserByUsername(sharedAccountName);
+    const { result } = await neynarClient.lookupUserByUsername(
+      sharedAccountName
+    );
     const { user: sharedAccount } = result;
 
     log.info(`sharedAccount: ${JSON.stringify(sharedAccount)}`);
@@ -148,15 +147,12 @@ app.frame("/shared-account/:name/register/:user", async (c) => {
 
   log.info(`frame data: ${JSON.stringify(frameData)}`);
 
-  const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
-
   try {
-    const { result: sharedAccountResult } = await client.lookupUserByUsername(
-      sharedAccountName
-    );
+    const { result: sharedAccountResult } =
+      await neynarClient.lookupUserByUsername(sharedAccountName);
     const { user: sharedAccount } = sharedAccountResult;
 
-    const { users: userToRegisterResult } = await client.fetchBulkUsers([
+    const { users: userToRegisterResult } = await neynarClient.fetchBulkUsers([
       Number(userFid),
     ]);
     const userToRegister = userToRegisterResult[0];
@@ -164,14 +160,35 @@ app.frame("/shared-account/:name/register/:user", async (c) => {
     log.info(`sharedAccount: ${JSON.stringify(sharedAccount)}`);
     log.info(`userToRegister: ${JSON.stringify(userToRegister)}`);
 
+    const signer = await neynarClient.createSigner();
+
+    log.info(`signer: ${JSON.stringify(signer)}`);
+
+    const prisma = new PrismaClient();
+    await prisma.signer.create({
+      data: {
+        id: signer.signer_uuid,
+        ethAddr: "0x",
+        eddsaKey: signer.public_key,
+        fid: sharedAccount.fid.toString(),
+      },
+    });
+
     return c.res({
+      action: "/finish",
       image: (
         <div style={{ color: "white", display: "flex", fontSize: 60 }}>
           Shared Account: {sharedAccount.username}
           User to register: {userToRegister.username}
         </div>
       ),
-      intents: [<Button value="claim">Claim</Button>],
+      intents: [
+        <Button.Transaction
+          target={`/claim/${sharedAccount.custodyAddress}/${signer.public_key}`}
+        >
+          Claim
+        </Button.Transaction>,
+      ],
     });
   } catch (error) {
     if (isApiErrorResponse(error)) {
@@ -188,6 +205,36 @@ app.frame("/shared-account/:name/register/:user", async (c) => {
       intents: [],
     });
   }
+});
+
+app.transaction("/claim/:sharedAccountAddress/:key", async (c) => {
+  const { inputText } = c;
+  const sharedAccountAddress = c.req.param(
+    "sharedAccountAddress"
+  ) as `0x${string}`;
+  const key = c.req.param("name") as `0x${string}`;
+
+  const metadata = await getMetadata(key);
+
+  // Contract transaction response.
+  return c.contract({
+    abi: HATS_FARCASTER_DELEGATOR_ABI,
+    chainId: "eip155:10",
+    functionName: "addKey",
+    args: [1, key, 1, metadata],
+    to: sharedAccountAddress,
+  });
+});
+
+app.frame("/finish", (c) => {
+  const { transactionId } = c;
+  return c.res({
+    image: (
+      <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+        Transaction ID: {transactionId}
+      </div>
+    ),
+  });
 });
 
 /*
@@ -236,12 +283,10 @@ app.frame("/shared-account/:name/act/:user/:hash", async (c) => {
   const hash = c.req.param("hash");
   const url = `https://warpcast.com/${user}/${hash}`;
 
-  const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
-
   log.info(`frame data: ${JSON.stringify(frameData)}`);
 
   try {
-    const { cast } = await client.lookUpCastByHashOrWarpcastUrl(
+    const { cast } = await neynarClient.lookUpCastByHashOrWarpcastUrl(
       url,
       CastParamType.Url
     );

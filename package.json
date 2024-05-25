@@ -8,12 +8,14 @@
     "start": "tsx src/index.tsx"
   },
   "dependencies": {
+    "@farcaster/hub-nodejs": "^0.11.12",
     "@hono/node-server": "^1",
     "@neynar/nodejs-sdk": "^1.25.0",
     "@prisma/client": "5.14.0",
     "dotenv": "^16.4.5",
     "frog": "latest",
     "hono": "^4",
+    "viem": "1.19.13",
     "winston": "^3.13.0"
   },
   "devDependencies": {
