@@ -7,6 +7,7 @@ import { isApiErrorResponse, CastParamType } from "@neynar/nodejs-sdk";
 import { PrismaClient } from "@prisma/client";
 import log from "./log";
 import neynarClient from "./neynar";
+import prismaClient from "./prisma";
 import { getMetadata } from "./utils";
 import { HATS_FARCASTER_DELEGATOR_ABI } from "./constants";
 import "dotenv/config";
@@ -164,8 +165,7 @@ app.frame("/shared-account/:name/register/:user", async (c) => {
 
     log.info(`signer: ${JSON.stringify(signer)}`);
 
-    const prisma = new PrismaClient();
-    await prisma.signer.create({
+    await prismaClient.signer.create({
       data: {
         id: signer.signer_uuid,
         ethAddr: "0x",
