@@ -212,7 +212,7 @@ app.transaction("/claim/:sharedAccountAddress/:key", async (c) => {
   const sharedAccountAddress = c.req.param(
     "sharedAccountAddress"
   ) as `0x${string}`;
-  const key = c.req.param("name") as `0x${string}`;
+  const key = c.req.param("key") as `0x${string}`;
 
   const metadata = await getMetadata(key);
 
