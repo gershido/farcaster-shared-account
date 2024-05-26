@@ -97,9 +97,15 @@ app.frame("/shared-account/check", async (c) => {
             flexDirection: "column",
           }}
         >
-          <div>User name: {sharedAccount.username}</div>
-          <div>FID: {sharedAccount.fid}</div>
-          <div>Address: {sharedAccount.custodyAddress}</div>
+          <div style={{ color: "white", display: "flex" }}>
+            User name: {sharedAccount.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            FID: {sharedAccount.fid}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Address: {sharedAccount.custodyAddress}
+          </div>
         </div>
       ),
       intents: [
