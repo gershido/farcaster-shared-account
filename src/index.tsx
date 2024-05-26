@@ -209,6 +209,9 @@ app.frame("/shared-account/:name", async (c) => {
       });
     }
 
+    log.info(`validCasterAddresses: ${JSON.stringify(validCasterAddresses)}`);
+    log.info(`sharedAccount.fid: ${sharedAccount.fid}`);
+
     const signer = await getSigner(sharedAccount.fid, validCasterAddresses);
     if (signer === null) {
       return c.res({
