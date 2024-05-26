@@ -36,7 +36,7 @@ app.frame("/", async (c) => {
           flexDirection: "column",
         }}
       >
-        <div>Select a shared account by its user name</div>
+        <div>Select by user name</div>
       </div>
     ),
     intents: [
