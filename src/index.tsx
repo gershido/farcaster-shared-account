@@ -40,7 +40,7 @@ app.frame("/", async (c) => {
       </div>
     ),
     intents: [
-      <TextInput placeholder="Search shared account by user name" />,
+      <TextInput placeholder="Search by user name" />,
       <Button value="search" action="/shared-account/check">
         Search
       </Button>,
