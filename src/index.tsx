@@ -17,7 +17,8 @@ import {
   getCasterHat,
   viemPublicClient,
 } from "./utils";
-import { HATS_FARCASTER_DELEGATOR_ABI } from "./constants";
+import { HATS_FARCASTER_DELEGATOR_ABI, KEY_ADD_EVENT_ABI } from "./constants";
+import { decodeEventLog } from "viem";
 import "dotenv/config";
 
 export const app = new Frog({
@@ -418,11 +419,21 @@ app.frame("/finish/:uuid", async (c) => {
   const { transactionId } = c;
   const uuid = c.req.param("uuid");
 
-  const transaction = await viemPublicClient.waitForTransactionReceipt({
+  const receipt = await viemPublicClient.waitForTransactionReceipt({
     hash: transactionId as `0x${string}`,
   });
 
-  log.info(`transaction: ${JSON.stringify(transaction, null, 2)}`);
+  log.info(`transaction.from: ${receipt.from}`);
+  log.info(`transaction.to: ${receipt.to}`);
+
+  const event = decodeEventLog({
+    abi: KEY_ADD_EVENT_ABI,
+    eventName: "Add",
+    data: receipt.logs[0].data,
+    topics: receipt.logs[0].topics,
+  });
+
+  log.info(`transaction.to: ${event.args.fid}`);
 
   return c.res({
     image: (

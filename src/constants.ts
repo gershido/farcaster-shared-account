@@ -1193,3 +1193,44 @@ export const HATS_ABI = [
     type: "function",
   },
 ] as const;
+
+export const KEY_ADD_EVENT_ABI = [
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "fid",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "uint32",
+        name: "keyType",
+        type: "uint32",
+      },
+      { indexed: true, internalType: "bytes", name: "key", type: "bytes" },
+      {
+        indexed: false,
+        internalType: "bytes",
+        name: "keyBytes",
+        type: "bytes",
+      },
+      {
+        indexed: false,
+        internalType: "uint8",
+        name: "metadataType",
+        type: "uint8",
+      },
+      {
+        indexed: false,
+        internalType: "bytes",
+        name: "metadata",
+        type: "bytes",
+      },
+    ],
+    name: "Add",
+    type: "event",
+  },
+] as const;
