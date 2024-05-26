@@ -180,10 +180,18 @@ app.frame("/shared-account/:name", async (c) => {
               flexDirection: "column",
             }}
           >
-            <div>User name: {sharedAccount.username}</div>
-            <div>FID: {sharedAccount.fid}</div>
-            <div>Address: {sharedAccount.custodyAddress}</div>
-            <div>Only wearers of the caster Hat can use this account</div>
+            <div style={{ color: "white", display: "flex" }}>
+              User name: {sharedAccount.username}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              FID: {sharedAccount.fid}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              Address: {sharedAccount.custodyAddress}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              Only wearers of the caster Hat can use this account
+            </div>
           </div>
         ),
         intents: [
@@ -213,10 +221,16 @@ app.frame("/shared-account/:name", async (c) => {
               flexDirection: "column",
             }}
           >
-            <div>User name: {sharedAccount.username}</div>
-            <div>FID: {sharedAccount.fid}</div>
-            <div>Address: {sharedAccount.custodyAddress}</div>
-            <div>
+            <div style={{ color: "white", display: "flex" }}>
+              User name: {sharedAccount.username}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              FID: {sharedAccount.fid}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              Address: {sharedAccount.custodyAddress}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
               Claim casting authority and start using the shared account
             </div>
           </div>
@@ -252,10 +266,18 @@ app.frame("/shared-account/:name", async (c) => {
             flexDirection: "column",
           }}
         >
-          <div>User name: {sharedAccount.username}</div>
-          <div>FID: {sharedAccount.fid}</div>
-          <div>Address: {sharedAccount.custodyAddress}</div>
-          <div>Use the shared account by choosing a cast to respond to</div>
+          <div style={{ color: "white", display: "flex" }}>
+            User name: {sharedAccount.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            FID: {sharedAccount.fid}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Address: {sharedAccount.custodyAddress}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Use the shared account by choosing a cast to respond to
+          </div>
         </div>
       ),
       intents: [
@@ -339,9 +361,15 @@ app.frame("/shared-account/:name/register/:user", async (c) => {
             flexDirection: "column",
           }}
         >
-          <div>User name: {sharedAccount.username}</div>
-          <div>FID: {sharedAccount.fid}</div>
-          <div>User to register: {userToRegister.username}</div>
+          <div style={{ color: "white", display: "flex" }}>
+            User name: {sharedAccount.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            FID: {sharedAccount.fid}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            User to register: {userToRegister.username}
+          </div>
         </div>
       ),
       intents: [
