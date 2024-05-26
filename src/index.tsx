@@ -63,7 +63,7 @@ app.frame("/shared-account/check", async (c) => {
     });
   }
 
-  log.info(`context: ${JSON.stringify(c, null, 2)}`);
+  log.info(`frameData: ${JSON.stringify(frameData, null, 2)}`);
 
   try {
     const {
