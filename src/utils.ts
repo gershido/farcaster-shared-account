@@ -34,16 +34,22 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-export const getValidCasterAddresses = async (
-  sharedAccountAddress: `0x${string}`,
-  userAddresses: `0x${string}`[]
-): Promise<`0x${string}`[]> => {
+export const getCasterHat = async (
+  sharedAccountAddress: `0x${string}`
+): Promise<bigint> => {
   const casterHat = await publicClient.readContract({
     address: sharedAccountAddress,
     abi: HATS_FARCASTER_DELEGATOR_ABI,
     functionName: "hatId",
   });
 
+  return casterHat;
+};
+
+export const getValidCasterAddresses = async (
+  casterHat: bigint,
+  userAddresses: `0x${string}`[]
+): Promise<`0x${string}`[]> => {
   const calls = userAddresses.map((userAddress) => {
     return {
       address: HATS_ADDRESS,
