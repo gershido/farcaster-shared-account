@@ -418,7 +418,7 @@ app.frame("/finish/:uuid", async (c) => {
   const { transactionId } = c;
   const uuid = c.req.param("uuid");
 
-  const transaction = await viemPublicClient.getTransaction({
+  const transaction = await viemPublicClient.waitForTransactionReceipt({
     hash: transactionId as `0x${string}`,
   });
 
