@@ -1,5 +1,12 @@
 import neynarClient from "./neynar";
 import {
+  HATS_FARCASTER_DELEGATOR_ABI,
+  HATS_ABI,
+  HATS_ADDRESS,
+  HATS_FARCASTER_DELEGATOR_ADDRESS,
+} from "./constants";
+import prismaClient from "./prisma";
+import {
   ViemLocalEip712Signer,
   SIGNED_KEY_REQUEST_TYPE,
   SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN,
@@ -18,7 +25,82 @@ import {
   keccak256,
   createWalletClient,
   http,
+  createPublicClient,
 } from "viem";
+import { optimism } from "viem/chains";
+
+const publicClient = createPublicClient({
+  chain: optimism,
+  transport: http(),
+});
+
+export const getValidCasterAddresses = async (
+  sharedAccountAddress: `0x${string}`,
+  userAddresses: `0x${string}`[]
+): Promise<`0x${string}`[]> => {
+  const casterHat = await publicClient.readContract({
+    address: sharedAccountAddress,
+    abi: HATS_FARCASTER_DELEGATOR_ABI,
+    functionName: "hatId",
+  });
+
+  const calls = userAddresses.map((userAddress) => {
+    return {
+      address: HATS_ADDRESS,
+      abi: HATS_ABI,
+      functionName: "isWearerOfHat",
+      args: [userAddress, casterHat],
+    };
+  });
+
+  const results = await publicClient.multicall({ contracts: calls });
+
+  const validCasterAddresses: `0x${string}`[] = [];
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].status === "success" && results[i].result === true) {
+      validCasterAddresses.push(userAddresses[i]);
+    }
+  }
+  return validCasterAddresses;
+};
+
+export const isSharedAccount = async (address: `0x${string}`) => {
+  try {
+    const res = await publicClient.readContract({
+      address,
+      abi: HATS_FARCASTER_DELEGATOR_ABI,
+      functionName: "IMPLEMENTATION",
+    });
+
+    if (res.toLowerCase() === HATS_FARCASTER_DELEGATOR_ADDRESS.toLowerCase()) {
+      return true;
+    }
+  } catch (err) {
+    return false;
+  }
+};
+
+export const getSigner = async (
+  sharedAccountFid: number,
+  userAddresses: `0x${string}`[]
+) => {
+  const signer = await prismaClient.signer.findFirst({
+    where: {
+      AND: [
+        {
+          fid: sharedAccountFid.toString(),
+        },
+        {
+          ethAddr: {
+            in: userAddresses,
+          },
+        },
+      ],
+    },
+  });
+
+  return signer;
+};
 
 export const getMetadata = async (key: `0x${string}`) => {
   const appAccount = privateKeyToAccount(
@@ -69,150 +151,3 @@ export const getMetadata = async (key: `0x${string}`) => {
 
   return metadata;
 };
-
-//export const addKey = async (pKey: `0x${string}`) => {
-//  const walletClient = createWalletClient({
-//    account: privateKeyToAccount(process.env.APP_PRIVATE_KEY as `0x${string}`),
-//    transport: http(),
-//  });
-//  const deadline = BigInt(Math.floor(Date.now() / 1000) + 86400); // signature is valid for 1 day
-//  const SIGNED_KEY_REQUEST_TYPEHASH = "0x16be47f1f1f50a66a48db64eba3fd35c21439c23622e513aab5b902018aec438";
-//
-//  const typedMetadataData = {
-//    domain: SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN,
-//    types: {
-//      SignedKeyRequest: SIGNED_KEY_REQUEST_TYPE,
-//    },
-//    primaryType: "SignedKeyRequest" as const,
-//    message: {
-//      requestFid: BigInt(Number(process.env.FID)),
-//      key: pKey,
-//      deadline: deadline,
-//    },
-//  };
-//  const metadataHash = hashTypedData(typedMetadataData);
-//  const metadataSignature = await walletClient.signTypedData(typedMetadataData);
-//
-//  const hatsProtocolSignature = encodePacked(
-//    ["bytes", "bytes32", "uint256", "bytes", "uint256"],
-//    [
-//      metadataSignature,
-//      SIGNED_KEY_REQUEST_TYPEHASH,
-//      BigInt(Number(process.env.FID)),
-//      keccak256(pKey),
-//      deadline,
-//    ]
-//  );
-//
-//  const metadata = encodeAbiParameters(
-//    [
-//      {
-//        components: [
-//          {
-//            name: "requestFid",
-//            type: "uint256",
-//          },
-//          {
-//            name: "requestSigner",
-//            type: "address",
-//          },
-//          {
-//            name: "signature",
-//            type: "bytes",
-//          },
-//          {
-//            name: "deadline",
-//            type: "uint256",
-//          },
-//        ],
-//        type: "tuple",
-//      },
-//    ],
-//    [
-//      {
-//        requestFid: fid,
-//        requestSigner: delegatorContractAddress,
-//        signature: hatsProtocolSignature,
-//        deadline,
-//      },
-//    ]
-//  );
-//  try {
-//    // console.log('isMetadataSignatureValid', await isValidSignature(delegatorContractAddress, metadataHash, metadata));
-//    // const isValidSignedKeyReq = await isValidSignedKeyRequest(
-//    //   fid,
-//    //   hexStringPublicKey,
-//    //   metadata
-//    // );
-//    // console.log('isValidSignedKeyReq', isValidSignedKeyReq)
-//
-//    const tx = await writeContract(config, {
-//      abi: HatsFarcasterDelegatorAbi,
-//      address: delegatorContractAddress,
-//      functionName: "addKey",
-//      args: [1, hexStringPublicKey, 1, metadata],
-//    });
-//    setOnchainTransactionHash(tx);
-//    console.log("result tx", tx);
-//  } catch (e) {
-//    console.error("error when trying to add key", e);
-//    setErrorMessage(`Failed to add key ${e}`);
-//    setState(HatsProtocolSignupSteps[5]);
-//  }
-//};
-
-// export const getSignedKey = async () => {
-//   const createSigner = await neynarClient.createSigner();
-//   const { deadline, signature } = await generate_signature(
-//     createSigner.public_key
-//   );
-//
-//   if (deadline === 0 || signature === "") {
-//     throw new Error("Failed to generate signature");
-//   }
-//
-//   const fid = await getFid();
-//
-//   const signedKey = await neynarClient.registerSignedKey(
-//     createSigner.signer_uuid,
-//     fid,
-//     deadline,
-//     signature
-//   );
-//
-//   return signedKey;
-// };
-
-// const generate_signature = async function (public_key: string) {
-//   if (typeof process.env.FARCASTER_DEVELOPER_MNEMONIC === "undefined") {
-//     throw new Error("FARCASTER_DEVELOPER_MNEMONIC is not defined");
-//   }
-//
-//   const FARCASTER_DEVELOPER_MNEMONIC = process.env.FARCASTER_DEVELOPER_MNEMONIC;
-//   const FID = await getFid();
-//
-//   const account = mnemonicToAccount(FARCASTER_DEVELOPER_MNEMONIC);
-//   const appAccountKey = new ViemLocalEip712Signer(account as any);
-//
-//   // Generates an expiration date for the signature (24 hours from now).
-//   const deadline = Math.floor(Date.now() / 1000) + 86400;
-//
-//   const uintAddress = hexToBytes(public_key as `0x${string}`);
-//
-//   const signature = await appAccountKey.signKeyRequest({
-//     requestFid: BigInt(FID),
-//     key: uintAddress,
-//     deadline: BigInt(deadline),
-//   });
-//
-//   if (signature.isErr()) {
-//     return {
-//       deadline,
-//       signature: "",
-//     };
-//   }
-//
-//   const sigHex = bytesToHex(signature.value);
-//
-//   return { deadline, signature: sigHex };
-// };
