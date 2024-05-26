@@ -15,6 +15,7 @@ import {
   getValidCasterAddresses,
   isSharedAccount,
   getCasterHat,
+  viemPublicClient,
 } from "./utils";
 import { HATS_FARCASTER_DELEGATOR_ABI } from "./constants";
 import "dotenv/config";
@@ -241,7 +242,7 @@ app.frame("/shared-account/:name", async (c) => {
         intents: [
           <Button
             value="claim"
-            action={`/shared-account/${sharedAccount.username}/register/${frameData.fid}`}
+            action={`/shared-account/${sharedAccount.username}/register/${validCasterAddresses[0]}`}
           >
             Claim
           </Button>,
@@ -320,10 +321,10 @@ app.frame("/shared-account/:name", async (c) => {
   }
 });
 
-app.frame("/shared-account/:name/register/:user", async (c) => {
+app.frame("/shared-account/:name/register/:address", async (c) => {
   const { frameData } = c;
   const sharedAccountName = c.req.param("name");
-  const userFid = c.req.param("user");
+  const address = c.req.param("address");
 
   log.info(`frame data: ${JSON.stringify(frameData, null, 2)}`);
 
@@ -332,29 +333,23 @@ app.frame("/shared-account/:name/register/:user", async (c) => {
       result: { user: sharedAccount },
     } = await neynarClient.lookupUserByUsername(sharedAccountName);
 
-    const { users: userToRegisterResult } = await neynarClient.fetchBulkUsers([
-      Number(userFid),
-    ]);
-    const userToRegister = userToRegisterResult[0];
-
     log.info(`sharedAccount: ${JSON.stringify(sharedAccount, null, 2)}`);
-    log.info(`userToRegister: ${JSON.stringify(userToRegister, null, 2)}`);
 
     const signer = await neynarClient.createSigner();
 
     log.info(`signer: ${JSON.stringify(signer, null, 2)}`);
 
-    await prismaClient.signer.create({
-      data: {
-        id: signer.signer_uuid,
-        ethAddr: "0x",
-        eddsaKey: signer.public_key,
-        fid: sharedAccount.fid.toString(),
-      },
-    });
+    // await prismaClient.signer.create({
+    //   data: {
+    //     id: signer.signer_uuid,
+    //     ethAddr: "0x",
+    //     eddsaKey: signer.public_key,
+    //     fid: sharedAccount.fid.toString(),
+    //   },
+    // });
 
     return c.res({
-      action: "/finish",
+      action: `/finish/${signer.signer_uuid}`,
       image: (
         <div
           style={{
@@ -371,7 +366,7 @@ app.frame("/shared-account/:name/register/:user", async (c) => {
             FID: {sharedAccount.fid}
           </div>
           <div style={{ color: "white", display: "flex" }}>
-            User to register: {userToRegister.username}
+            Address to register: {address}
           </div>
         </div>
       ),
@@ -419,8 +414,16 @@ app.transaction("/claim/:sharedAccountAddress/:key", async (c) => {
   });
 });
 
-app.frame("/finish", (c) => {
+app.frame("/finish/:uuid", async (c) => {
   const { transactionId } = c;
+  const uuid = c.req.param("uuid");
+
+  const transaction = await viemPublicClient.getTransaction({
+    hash: transactionId as `0x${string}`,
+  });
+
+  log.info(`transaction: ${JSON.stringify(transaction, null, 2)}`);
+
   return c.res({
     image: (
       <div style={{ color: "white", display: "flex", fontSize: 60 }}>

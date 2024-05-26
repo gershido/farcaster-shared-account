@@ -29,7 +29,7 @@ import {
 } from "viem";
 import { optimism } from "viem/chains";
 
-const publicClient = createPublicClient({
+export const viemPublicClient = createPublicClient({
   chain: optimism,
   transport: http(),
 });
@@ -37,7 +37,7 @@ const publicClient = createPublicClient({
 export const getCasterHat = async (
   sharedAccountAddress: `0x${string}`
 ): Promise<bigint> => {
-  const casterHat = await publicClient.readContract({
+  const casterHat = await viemPublicClient.readContract({
     address: sharedAccountAddress,
     abi: HATS_FARCASTER_DELEGATOR_ABI,
     functionName: "hatId",
@@ -59,7 +59,7 @@ export const getValidCasterAddresses = async (
     };
   });
 
-  const results = await publicClient.multicall({ contracts: calls });
+  const results = await viemPublicClient.multicall({ contracts: calls });
 
   const validCasterAddresses: `0x${string}`[] = [];
   for (let i = 0; i < results.length; i++) {
@@ -72,7 +72,7 @@ export const getValidCasterAddresses = async (
 
 export const isSharedAccount = async (address: `0x${string}`) => {
   try {
-    const res = await publicClient.readContract({
+    const res = await viemPublicClient.readContract({
       address,
       abi: HATS_FARCASTER_DELEGATOR_ABI,
       functionName: "IMPLEMENTATION",
