@@ -24,7 +24,7 @@ export const app = new Frog({
 app.use("/*", serveStatic({ root: "./public" }));
 
 app.frame("/", async (c) => {
-  log.info(`context: ${JSON.stringify(c, null, 2)}`);
+  // log.info(`context: ${JSON.stringify(c, null, 2)}`);
 
   return c.res({
     image: (
