@@ -423,8 +423,8 @@ app.frame("/finish/:uuid", async (c) => {
     hash: transactionId as `0x${string}`,
   });
 
-  log.info(`transaction.from: ${receipt.from}`);
-  log.info(`transaction.to: ${receipt.to}`);
+  // log.info(`transaction.from: ${receipt.from}`);
+  // log.info(`transaction.to: ${receipt.to}`);
 
   const event = decodeEventLog({
     abi: KEY_ADD_EVENT_ABI,
@@ -433,7 +433,16 @@ app.frame("/finish/:uuid", async (c) => {
     topics: receipt.logs[0].topics,
   });
 
-  log.info(`transaction.to: ${event.args.fid}`);
+  await prismaClient.signer.create({
+    data: {
+      id: uuid,
+      ethAddr: receipt.from.toLowerCase(),
+      eddsaKey: event.args.keyBytes,
+      fid: event.args.fid.toString(),
+    },
+  });
+
+  // log.info(`transaction.to: ${event.args.fid}`);
 
   return c.res({
     image: (
