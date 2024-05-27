@@ -112,19 +112,18 @@ app.frame("/shared-account/check", async (c) => {
           style={{
             color: "white",
             display: "flex",
-            fontSize: 60,
+            fontSize: 50,
             flexDirection: "column",
             justifyContent: "center",
-            alignItems: "center",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             User name: {sharedAccount.username}
           </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             FID: {sharedAccount.fid}
           </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             Address: {sharedAccount.custodyAddress}
           </div>
         </div>
@@ -153,7 +152,6 @@ app.frame("/shared-account/check", async (c) => {
             fontSize: 60,
             flexDirection: "column",
             justifyContent: "center",
-            alignItems: "center",
             height: "100vh",
           }}
         >
@@ -205,10 +203,9 @@ app.frame("/shared-account/:name", async (c) => {
             style={{
               color: "white",
               display: "flex",
-              fontSize: 60,
+              fontSize: 50,
               flexDirection: "column",
               justifyContent: "center",
-              alignItems: "center",
               height: "100vh",
             }}
           >
@@ -252,10 +249,9 @@ app.frame("/shared-account/:name", async (c) => {
             style={{
               color: "white",
               display: "flex",
-              fontSize: 60,
+              fontSize: 50,
               flexDirection: "column",
               justifyContent: "center",
-              alignItems: "center",
               height: "100vh",
             }}
           >
@@ -300,10 +296,9 @@ app.frame("/shared-account/:name", async (c) => {
           style={{
             color: "white",
             display: "flex",
-            fontSize: 60,
+            fontSize: 50,
             flexDirection: "column",
             justifyContent: "center",
-            alignItems: "center",
             height: "100vh",
           }}
         >
@@ -386,7 +381,6 @@ app.frame("/shared-account/:name/register/:address", async (c) => {
             fontSize: 60,
             flexDirection: "column",
             justifyContent: "center",
-            alignItems: "center",
             height: "100vh",
           }}
         >
