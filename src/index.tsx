@@ -114,9 +114,6 @@ app.frame("/shared-account/check", async (c) => {
             display: "flex",
             fontSize: 60,
             flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
           }}
         >
           <div style={{ color: "white", display: "flex" }}>
@@ -154,6 +151,7 @@ app.frame("/shared-account/check", async (c) => {
             fontSize: 60,
             flexDirection: "column",
             justifyContent: "center",
+            alignItems: "center",
             height: "100vh",
           }}
         >
