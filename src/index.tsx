@@ -38,6 +38,8 @@ app.frame("/", async (c) => {
         style={{
           color: "white",
           display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           fontSize: 50,
           flexDirection: "column",
         }}
