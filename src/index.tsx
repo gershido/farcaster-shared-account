@@ -119,11 +119,6 @@ app.frame("/shared-account/check", async (c) => {
             height: "100vh",
           }}
         >
-          {sharedAccount.pfp && (
-            <div style={{ color: "white", display: "flex" }}>
-              <img src={`${sharedAccount.pfp}`} />
-            </div>
-          )}
           <div style={{ color: "white", display: "flex" }}>
             User name: {sharedAccount.username}
           </div>
