@@ -31,7 +31,7 @@ import { optimism } from "viem/chains";
 
 export const viemPublicClient = createPublicClient({
   chain: optimism,
-  transport: http(),
+  transport: http(process.env.OPTIMISM_RPC as string),
 });
 
 export const getCasterHat = async (
