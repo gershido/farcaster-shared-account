@@ -210,16 +210,10 @@ app.frame("/shared-account/:name", async (c) => {
               height: "100vh",
             }}
           >
-            <div style={{ display: "flex" }}>
-              User name: {sharedAccount.username}
-            </div>
-            <div style={{ display: "flex" }}>FID: {sharedAccount.fid}</div>
-            <div style={{ display: "flex" }}>
-              Address: {sharedAccount.custodyAddress}
-            </div>
-            <div style={{ display: "flex" }}>
-              Only wearers of the caster Hat can use this account
-            </div>
+            <div>User name: {sharedAccount.username}</div>
+            <div>FID: {sharedAccount.fid}</div>
+            <div>Address: {sharedAccount.custodyAddress}</div>
+            <div>Only wearers of the caster Hat can use this account</div>
           </div>
         ),
         intents: [
