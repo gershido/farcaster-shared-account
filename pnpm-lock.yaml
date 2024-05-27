@@ -8,6 +8,9 @@ dependencies:
   '@farcaster/hub-nodejs':
     specifier: ^0.11.12
     version: 0.11.12(typescript@5.4.5)
+  '@hatsprotocol/sdk-v1-core':
+    specifier: ^0.9.0
+    version: 0.9.0(viem@1.19.13)
   '@hono/node-server':
     specifier: ^1
     version: 1.11.1
@@ -300,6 +303,14 @@ packages:
       - zod
     dev: false
 
+  /@graphql-typed-document-node/core@3.2.0(graphql@16.8.1):
+    resolution: {integrity: sha512-mB9oAsNCm9aM3/SOv4YtBMqZbYj10R7dkq8byBqxGY/ncFwhf2oQzMV+LCRlWoDSEBJ3COiR1yeDvMtsoOsuFQ==}
+    peerDependencies:
+      graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+    dependencies:
+      graphql: 16.8.1
+    dev: false
+
   /@grpc/grpc-js@1.8.21:
     resolution: {integrity: sha512-KeyQeZpxeEBSqFVTi3q2K7PiPXmgBfECc4updA1ejCLjYmoAlvvM3ZMp5ztTDUCUQmoY3CpDxvchjO1+rFkoHg==}
     engines: {node: ^8.13.0 || >=10.10.0}
@@ -317,6 +328,29 @@ packages:
       long: 5.2.3
       protobufjs: 7.3.0
       yargs: 17.7.2
+    dev: false
+
+  /@hatsprotocol/sdk-v1-core@0.9.0(viem@1.19.13):
+    resolution: {integrity: sha512-xbEBhpYPfCNVXyVitx7JWsmV0fFvOte28/jfm3V/duBzjEvmlqZD+z86HnVfNK5KlLuDToEyI5dFLaqnxOMIxQ==}
+    peerDependencies:
+      viem: ^2.0.0
+    dependencies:
+      '@hatsprotocol/sdk-v1-subgraph': 1.0.0
+      graphql: 16.8.1
+      graphql-request: 6.1.0(graphql@16.8.1)
+      viem: 1.19.13(typescript@5.4.5)
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /@hatsprotocol/sdk-v1-subgraph@1.0.0:
+    resolution: {integrity: sha512-86c5oC18KCcaNCBBw+eemA09zmEyuh3xr4SflrOUDXuCdEQZ08M9WqgEe7tZNw2QURTGArwPVaCQ2j7bkMjdow==}
+    dependencies:
+      graphql: 16.8.1
+      graphql-request: 6.1.0(graphql@16.8.1)
+      zod: 3.23.8
+    transitivePeerDependencies:
+      - encoding
     dev: false
 
   /@hono/node-server@1.11.1:
@@ -1122,6 +1156,14 @@ packages:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
     dev: true
 
+  /cross-fetch@3.1.8:
+    resolution: {integrity: sha512-cvA+JwZoU0Xq+h6WkMvAUqPEYy92Obet6UdKLfW60qn99ftItKjB5T+BkyWOFWe2pUyfQ+IJHmpOTznqk1M6Kg==}
+    dependencies:
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
   /css-background-parser@0.1.0:
     resolution: {integrity: sha512-2EZLisiZQ+7m4wwur/qiYJRniHX4K5Tc9w93MT3AS0WS1u5kaZ4FKXlOTBhOjc+CgEgPiGY+fX1yWD8UwpEqUA==}
     dev: false
@@ -1436,6 +1478,23 @@ packages:
 
   /graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
+    dev: false
+
+  /graphql-request@6.1.0(graphql@16.8.1):
+    resolution: {integrity: sha512-p+XPfS4q7aIpKVcgmnZKhMNqhltk20hfXtkaIkTfjjmiKMJ5xrt5c743cL03y/K7y1rg3WrIC49xGiEQ4mxdNw==}
+    peerDependencies:
+      graphql: 14 - 16
+    dependencies:
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.8.1)
+      cross-fetch: 3.1.8
+      graphql: 16.8.1
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /graphql@16.8.1:
+    resolution: {integrity: sha512-59LZHPdGZVh695Ud9lRzPBVTtlX9ZCV150Er2W43ro37wVof0ctenSaskPPjN7lVTIN8mSZt8PHUNKZuNQUuxw==}
+    engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
     dev: false
 
   /has-flag@4.0.0:
@@ -2390,4 +2449,8 @@ packages:
 
   /yoga-wasm-web@0.3.3:
     resolution: {integrity: sha512-N+d4UJSJbt/R3wqY7Coqs5pcV0aUj2j9IaQ3rNj9bVCLld8tTGKRa2USARjnvZJWVx1NDmQev8EknoczaOQDOA==}
+    dev: false
+
+  /zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
     dev: false

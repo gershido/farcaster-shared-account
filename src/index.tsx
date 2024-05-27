@@ -3,13 +3,26 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Button, Frog, TextInput } from "frog";
 import { devtools } from "frog/dev";
 import { neynar } from "frog/hubs";
-import { isApiErrorResponse, CastParamType } from "@neynar/nodejs-sdk";
+import {
+  isApiErrorResponse,
+  CastParamType,
+  ReactionType,
+} from "@neynar/nodejs-sdk";
+import { hatIdDecimalToIp, hatIdToTreeId } from "@hatsprotocol/sdk-v1-core";
 import { PrismaClient } from "@prisma/client";
 import log from "./log";
 import neynarClient from "./neynar";
 import prismaClient from "./prisma";
-import { getMetadata } from "./utils";
-import { HATS_FARCASTER_DELEGATOR_ABI } from "./constants";
+import {
+  getMetadata,
+  getSigner,
+  getValidCasterAddresses,
+  isSharedAccount,
+  getCasterHat,
+  viemPublicClient,
+} from "./utils";
+import { HATS_FARCASTER_DELEGATOR_ABI, KEY_ADD_EVENT_ABI } from "./constants";
+import { decodeEventLog } from "viem";
 import "dotenv/config";
 
 export const app = new Frog({
@@ -19,27 +32,30 @@ export const app = new Frog({
 app.use("/*", serveStatic({ root: "./public" }));
 
 app.frame("/", async (c) => {
-  const { frameData } = c;
-
-  log.info(`frame data: ${JSON.stringify(frameData)}`);
-
   return c.res({
-    action: "/select",
     image: (
-      <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-        Select a shared account by its user name
+      <div
+        style={{
+          color: "white",
+          display: "flex",
+          fontSize: 50,
+          flexDirection: "column",
+        }}
+      >
+        <div>Select by user name</div>
       </div>
     ),
     intents: [
-      <TextInput placeholder="Enter shared account user name" />,
-      <Button value="submit" action="/select">
-        Submit
+      <TextInput placeholder="Search by user name" />,
+      <Button value="search" action="/shared-account/check">
+        Search
       </Button>,
+      <Button value="create">Create New</Button>,
     ],
   });
 });
 
-app.frame("/select", async (c) => {
+app.frame("/shared-account/check", async (c) => {
   const { frameData } = c;
 
   if (frameData === undefined || frameData.inputText === undefined) {
@@ -53,20 +69,49 @@ app.frame("/select", async (c) => {
     });
   }
 
-  log.info(`frame data: ${JSON.stringify(frameData)}`);
+  log.info(`frameData: ${JSON.stringify(frameData, null, 2)}`);
 
   try {
-    const { result } = await neynarClient.lookupUserByUsername(
-      frameData.inputText
-    );
-    const { user: sharedAccount } = result;
+    const {
+      result: { user: sharedAccount },
+    } = await neynarClient.lookupUserByUsername(frameData.inputText);
 
-    log.info(`sharedAccount: ${JSON.stringify(sharedAccount)}`);
+    log.info(`sharedAccount: ${JSON.stringify(sharedAccount, null, 2)}`);
+
+    const isSharedAccout = await isSharedAccount(
+      sharedAccount.custodyAddress as `0x${string}`
+    );
+
+    if (!isSharedAccout) {
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            The user is not a shared account
+          </div>
+        ),
+        intents: [<Button.Reset>Back</Button.Reset>],
+      });
+    }
 
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Shared Account: {sharedAccount.username}
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            fontSize: 60,
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ color: "white", display: "flex" }}>
+            User name: {sharedAccount.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            FID: {sharedAccount.fid}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Address: {sharedAccount.custodyAddress}
+          </div>
         </div>
       ),
       intents: [
@@ -87,10 +132,10 @@ app.frame("/select", async (c) => {
     return c.res({
       image: (
         <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Error
+          The user was not found
         </div>
       ),
-      intents: [],
+      intents: [<Button.Reset>Back</Button.Reset>],
     });
   }
 });
@@ -99,28 +144,168 @@ app.frame("/shared-account/:name", async (c) => {
   const { frameData } = c;
   const sharedAccountName = c.req.param("name");
 
-  log.info(`frame data: ${JSON.stringify(frameData)}`);
-
-  try {
-    const { result } = await neynarClient.lookupUserByUsername(
-      sharedAccountName
-    );
-    const { user: sharedAccount } = result;
-
-    log.info(`sharedAccount: ${JSON.stringify(sharedAccount)}`);
-
+  if (frameData === undefined) {
     return c.res({
       image: (
         <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Shared Account: {sharedAccount.username}
+          Error
+        </div>
+      ),
+      intents: [],
+    });
+  }
+
+  log.info(`frame data: ${JSON.stringify(frameData, null, 2)}`);
+
+  try {
+    const {
+      result: { user: sharedAccount },
+    } = await neynarClient.lookupUserByUsername(sharedAccountName);
+
+    // log.info(`sharedAccount: ${JSON.stringify(sharedAccount, null, 2)}`);
+
+    const { users } = await neynarClient.fetchBulkUsers([frameData.fid]);
+    const user = users[0];
+
+    const casterHat = await getCasterHat(
+      sharedAccount.custodyAddress as `0x${string}`
+    );
+
+    const validCasterAddresses = await getValidCasterAddresses(
+      casterHat,
+      user.verified_addresses.eth_addresses as `0x${string}`[]
+    );
+    if (validCasterAddresses.length === 0) {
+      return c.res({
+        image: (
+          <div
+            style={{
+              color: "white",
+              display: "flex",
+              fontSize: 60,
+              flexDirection: "column",
+            }}
+          >
+            <div style={{ color: "white", display: "flex" }}>
+              User name: {sharedAccount.username}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              FID: {sharedAccount.fid}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              Address: {sharedAccount.custodyAddress}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              Only wearers of the caster Hat can use this account
+            </div>
+          </div>
+        ),
+        intents: [
+          <Button.Link
+            href={`https://app.hatsprotocol.xyz/trees/10/${hatIdToTreeId(
+              casterHat
+            ).toString()}?hatId=${hatIdDecimalToIp(casterHat)}`}
+          >
+            Caster Hat
+          </Button.Link>,
+          <Button value="back" action={`/`}>
+            Back
+          </Button>,
+        ],
+      });
+    }
+
+    log.info(`validCasterAddresses: ${JSON.stringify(validCasterAddresses)}`);
+    log.info(`sharedAccount.fid: ${sharedAccount.fid}`);
+
+    const signer = await getSigner(sharedAccount.fid, validCasterAddresses);
+    if (signer === null) {
+      return c.res({
+        image: (
+          <div
+            style={{
+              color: "white",
+              display: "flex",
+              fontSize: 60,
+              flexDirection: "column",
+            }}
+          >
+            <div style={{ color: "white", display: "flex" }}>
+              User name: {sharedAccount.username}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              FID: {sharedAccount.fid}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              Address: {sharedAccount.custodyAddress}
+            </div>
+            <div style={{ color: "white", display: "flex" }}>
+              Claim casting authority and start using the shared account
+            </div>
+          </div>
+        ),
+        intents: [
+          <Button
+            value="claim"
+            action={`/shared-account/${sharedAccount.username}/register/${validCasterAddresses[0]}`}
+          >
+            Claim
+          </Button>,
+          <Button.Link
+            href={`https://app.hatsprotocol.xyz/trees/10/${hatIdToTreeId(
+              casterHat
+            ).toString()}?hatId=${hatIdDecimalToIp(casterHat)}`}
+          >
+            Caster Hat
+          </Button.Link>,
+          <Button value="back" action={`/`}>
+            Back
+          </Button>,
+        ],
+      });
+    }
+
+    return c.res({
+      image: (
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            fontSize: 60,
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ color: "white", display: "flex" }}>
+            User name: {sharedAccount.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            FID: {sharedAccount.fid}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Address: {sharedAccount.custodyAddress}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Use the shared account by choosing a cast to respond to
+          </div>
         </div>
       ),
       intents: [
+        <TextInput placeholder="Enter cast url" />,
         <Button
-          value="register"
-          action={`/shared-account/${sharedAccount.username}/register/${frameData?.fid}`}
+          value="cast"
+          action={`/shared-account/${sharedAccount.username}/cast`}
         >
-          Register
+          Continue
+        </Button>,
+        <Button.Link
+          href={`https://app.hatsprotocol.xyz/trees/10/${hatIdToTreeId(
+            casterHat
+          ).toString()}?hatId=${hatIdDecimalToIp(casterHat)}`}
+        >
+          Caster Hat
+        </Button.Link>,
+        <Button value="back" action={`/`}>
+          Back
         </Button>,
       ],
     });
@@ -141,45 +326,53 @@ app.frame("/shared-account/:name", async (c) => {
   }
 });
 
-app.frame("/shared-account/:name/register/:user", async (c) => {
+app.frame("/shared-account/:name/register/:address", async (c) => {
   const { frameData } = c;
   const sharedAccountName = c.req.param("name");
-  const userFid = c.req.param("user");
+  const address = c.req.param("address");
 
-  log.info(`frame data: ${JSON.stringify(frameData)}`);
+  log.info(`frame data: ${JSON.stringify(frameData, null, 2)}`);
 
   try {
-    const { result: sharedAccountResult } =
-      await neynarClient.lookupUserByUsername(sharedAccountName);
-    const { user: sharedAccount } = sharedAccountResult;
+    const {
+      result: { user: sharedAccount },
+    } = await neynarClient.lookupUserByUsername(sharedAccountName);
 
-    const { users: userToRegisterResult } = await neynarClient.fetchBulkUsers([
-      Number(userFid),
-    ]);
-    const userToRegister = userToRegisterResult[0];
-
-    log.info(`sharedAccount: ${JSON.stringify(sharedAccount)}`);
-    log.info(`userToRegister: ${JSON.stringify(userToRegister)}`);
+    log.info(`sharedAccount: ${JSON.stringify(sharedAccount, null, 2)}`);
 
     const signer = await neynarClient.createSigner();
 
-    log.info(`signer: ${JSON.stringify(signer)}`);
+    log.info(`signer: ${JSON.stringify(signer, null, 2)}`);
 
-    await prismaClient.signer.create({
-      data: {
-        id: signer.signer_uuid,
-        ethAddr: "0x",
-        eddsaKey: signer.public_key,
-        fid: sharedAccount.fid.toString(),
-      },
-    });
+    // await prismaClient.signer.create({
+    //   data: {
+    //     id: signer.signer_uuid,
+    //     ethAddr: "0x",
+    //     eddsaKey: signer.public_key,
+    //     fid: sharedAccount.fid.toString(),
+    //   },
+    // });
 
     return c.res({
-      action: "/finish",
+      action: `/finish/${signer.signer_uuid}`,
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Shared Account: {sharedAccount.username}
-          User to register: {userToRegister.username}
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            fontSize: 60,
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ color: "white", display: "flex" }}>
+            User name: {sharedAccount.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            FID: {sharedAccount.fid}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Address to register: {address}
+          </div>
         </div>
       ),
       intents: [
@@ -226,8 +419,35 @@ app.transaction("/claim/:sharedAccountAddress/:key", async (c) => {
   });
 });
 
-app.frame("/finish", (c) => {
+app.frame("/finish/:uuid", async (c) => {
   const { transactionId } = c;
+  const uuid = c.req.param("uuid");
+
+  const receipt = await viemPublicClient.waitForTransactionReceipt({
+    hash: transactionId as `0x${string}`,
+  });
+
+  // log.info(`transaction.from: ${receipt.from}`);
+  // log.info(`transaction.to: ${receipt.to}`);
+
+  const event = decodeEventLog({
+    abi: KEY_ADD_EVENT_ABI,
+    eventName: "Add",
+    data: receipt.logs[0].data,
+    topics: receipt.logs[0].topics,
+  });
+
+  await prismaClient.signer.create({
+    data: {
+      id: uuid,
+      ethAddr: receipt.from.toLowerCase(),
+      eddsaKey: event.args.keyBytes,
+      fid: event.args.fid.toString(),
+    },
+  });
+
+  // log.info(`transaction.to: ${event.args.fid}`);
+
   return c.res({
     image: (
       <div style={{ color: "white", display: "flex", fontSize: 60 }}>
@@ -237,34 +457,10 @@ app.frame("/finish", (c) => {
   });
 });
 
-/*
-app.frame("/shared-account/register", async (c) => {
+app.frame("/shared-account/:sharedAccountName/cast", async (c) => {
   const { frameData } = c;
 
-  const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
-
-  log.info(`frame data: ${JSON.stringify(frameData)}`);
-
-  try {
-    const { cast } = await client.fetchBulkUsers([frameData?.fid])
-
-    log.info(`cast details: ${JSON.stringify(cast)}`);
-
-    return c.res({
-      image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          author username: {cast.author.username} author fid: {cast.author.fid}{" "}
-          cast hash: {cast.hash}
-        </div>
-      ),
-      intents: [<Button value="like">Like</Button>],
-    });
-  } catch (error) {
-    if (isApiErrorResponse(error)) {
-      log.info("API Error", error.response.data);
-    } else {
-      log.info("Generic Error", error);
-    }
+  if (frameData === undefined || frameData.inputText === undefined) {
     return c.res({
       image: (
         <div style={{ color: "white", display: "flex", fontSize: 60 }}>
@@ -274,16 +470,11 @@ app.frame("/shared-account/register", async (c) => {
       intents: [],
     });
   }
-});
-*/
-app.frame("/shared-account/:name/act/:user/:hash", async (c) => {
-  const { frameData } = c;
-  const sharedAccountName = c.req.param("name");
-  const user = c.req.param("user");
-  const hash = c.req.param("hash");
-  const url = `https://warpcast.com/${user}/${hash}`;
 
-  log.info(`frame data: ${JSON.stringify(frameData)}`);
+  const sharedAccountName = c.req.param("sharedAccountName");
+  const url = frameData.inputText;
+
+  log.info(`frame data: ${JSON.stringify(frameData, null, 2)}`);
 
   try {
     const { cast } = await neynarClient.lookUpCastByHashOrWarpcastUrl(
@@ -291,16 +482,199 @@ app.frame("/shared-account/:name/act/:user/:hash", async (c) => {
       CastParamType.Url
     );
 
+    return c.res({
+      image: (
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            fontSize: 60,
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ color: "white", display: "flex" }}>
+            Author user name: {cast.author.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Text: {cast.text}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Hash: {cast.hash}
+          </div>
+        </div>
+      ),
+      intents: [
+        <Button
+          value="cast"
+          action={`/shared-account/${sharedAccountName}/cast/${cast.hash}`}
+        >
+          Continue
+        </Button>,
+        <Button value="back" action={`/`}>
+          Back
+        </Button>,
+      ],
+    });
+  } catch (error) {
+    if (isApiErrorResponse(error)) {
+      log.info("API Error", error.response.data);
+    } else {
+      log.info("Generic Error", error);
+    }
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Invalid cast url
+        </div>
+      ),
+      intents: [
+        <Button value="back" action={`/`}>
+          Back
+        </Button>,
+      ],
+    });
+  }
+});
+
+app.frame("/shared-account/:sharedAccountName/cast/:hash", async (c) => {
+  const { frameData } = c;
+  const sharedAccountName = c.req.param("sharedAccountName");
+  const hash = c.req.param("hash");
+
+  if (frameData === undefined) {
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Error
+        </div>
+      ),
+      intents: [],
+    });
+  }
+
+  log.info(`frame data: ${JSON.stringify(frameData)}`);
+
+  const userFid = frameData.fid;
+  let sharedAccountFid: number;
+  let sharedAccountAddress: `0x${string}`;
+
+  try {
+    const {
+      result: { user: sharedAccount },
+    } = await neynarClient.lookupUserByUsername(sharedAccountName);
+
+    sharedAccountFid = sharedAccount.fid;
+    sharedAccountAddress = sharedAccount.custodyAddress as `0x${string}`;
+  } catch (error) {
+    if (isApiErrorResponse(error)) {
+      log.info("API Error", error.response.data);
+    } else {
+      log.info("Generic Error", error);
+    }
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Error
+        </div>
+      ),
+      intents: [],
+    });
+  }
+
+  let casterHat: bigint;
+  try {
+    casterHat = await getCasterHat(sharedAccountAddress);
+  } catch (error) {
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Error
+        </div>
+      ),
+      intents: [],
+    });
+  }
+
+  let validCasterAddresses: `0x${string}`[];
+
+  try {
+    const res = await neynarClient.fetchBulkUsers([userFid]);
+    const verifiedAddresses = res.users[0].verified_addresses
+      .eth_addresses as `0x${string}`[];
+    validCasterAddresses = await getValidCasterAddresses(
+      casterHat,
+      verifiedAddresses
+    );
+
+    if (validCasterAddresses.length === 0) {
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error: not a valid caster
+          </div>
+        ),
+        intents: [],
+      });
+    }
+  } catch (error) {
+    if (isApiErrorResponse(error)) {
+      log.info("API Error", error.response.data);
+    } else {
+      log.info("Generic Error", error);
+    }
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Error
+        </div>
+      ),
+      intents: [],
+    });
+  }
+
+  try {
+    const { cast } = await neynarClient.lookUpCastByHashOrWarpcastUrl(
+      hash,
+      CastParamType.Hash
+    );
+
     log.info(`cast details: ${JSON.stringify(cast)}`);
 
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          author username: {cast.author.username} author fid: {cast.author.fid}{" "}
-          cast hash: {cast.hash}
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            fontSize: 60,
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ color: "white", display: "flex" }}>
+            Author user name: {cast.author.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Text: {cast.text}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Hash: {cast.hash}
+          </div>
         </div>
       ),
-      intents: [<Button value="like">Like</Button>],
+      intents: [
+        <Button
+          value="like"
+          action={`/shared-account/${sharedAccountName}/cast/${hash}/react/like`}
+        >
+          Like
+        </Button>,
+        <Button
+          value="recast"
+          action={`/shared-account/${sharedAccountName}/cast/${hash}/react/reacast`}
+        >
+          Recast
+        </Button>,
+      ],
     });
   } catch (error) {
     if (isApiErrorResponse(error)) {
@@ -318,6 +692,137 @@ app.frame("/shared-account/:name/act/:user/:hash", async (c) => {
     });
   }
 });
+
+app.frame(
+  "/shared-account/:sharedAccountName/cast/:hash/react/:type",
+  async (c) => {
+    const { frameData } = c;
+    const sharedAccountName = c.req.param("sharedAccountName");
+    const hash = c.req.param("hash");
+    const reactionType = c.req.param("type");
+
+    if (frameData === undefined) {
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    log.info(`frame data: ${JSON.stringify(frameData)}`);
+
+    const userFid = frameData.fid;
+    let sharedAccountFid: number;
+    let sharedAccountAddress: `0x${string}`;
+
+    try {
+      const {
+        result: { user: sharedAccount },
+      } = await neynarClient.lookupUserByUsername(sharedAccountName);
+
+      sharedAccountFid = sharedAccount.fid;
+      sharedAccountAddress = sharedAccount.custodyAddress as `0x${string}`;
+    } catch (error) {
+      if (isApiErrorResponse(error)) {
+        log.info("API Error", error.response.data);
+      } else {
+        log.info("Generic Error", error);
+      }
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    let casterHat: bigint;
+    try {
+      casterHat = await getCasterHat(sharedAccountAddress);
+    } catch (error) {
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    let validCasterAddresses: `0x${string}`[];
+
+    try {
+      const res = await neynarClient.fetchBulkUsers([userFid]);
+      const verifiedAddresses = res.users[0].verified_addresses
+        .eth_addresses as `0x${string}`[];
+      validCasterAddresses = await getValidCasterAddresses(
+        casterHat,
+        verifiedAddresses
+      );
+
+      if (validCasterAddresses.length === 0) {
+        return c.res({
+          image: (
+            <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+              Error: not a valid caster
+            </div>
+          ),
+          intents: [],
+        });
+      }
+    } catch (error) {
+      if (isApiErrorResponse(error)) {
+        log.info("API Error", error.response.data);
+      } else {
+        log.info("Generic Error", error);
+      }
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    const signer = await getSigner(sharedAccountFid, validCasterAddresses);
+    if (signer === null) {
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    await neynarClient.publishReactionToCast(
+      signer.id,
+      reactionType === "like" ? ReactionType.Like : ReactionType.Recast,
+      hash
+    );
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Success!
+        </div>
+      ),
+      intents: [
+        <Button value="back" action={`/`}>
+          Back
+        </Button>,
+      ],
+    });
+  }
+);
 
 const port = Number(process.env.PORT) || 3000;
 console.log(`Server is running on port ${port}`);
