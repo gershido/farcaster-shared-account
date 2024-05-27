@@ -3,7 +3,11 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Button, Frog, TextInput } from "frog";
 import { devtools } from "frog/dev";
 import { neynar } from "frog/hubs";
-import { isApiErrorResponse, CastParamType } from "@neynar/nodejs-sdk";
+import {
+  isApiErrorResponse,
+  CastParamType,
+  ReactionType,
+} from "@neynar/nodejs-sdk";
 import { hatIdDecimalToIp, hatIdToTreeId } from "@hatsprotocol/sdk-v1-core";
 import { PrismaClient } from "@prisma/client";
 import log from "./log";
@@ -638,14 +642,38 @@ app.frame("/shared-account/:sharedAccountName/cast/:hash", async (c) => {
 
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          author username: {cast.author.username} author fid: {cast.author.fid}{" "}
-          cast hash: {cast.hash}
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            fontSize: 60,
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ color: "white", display: "flex" }}>
+            Author user name: {cast.author.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Text: {cast.text}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Hash: {cast.hash}
+          </div>
         </div>
       ),
       intents: [
-        <Button value="like">Like</Button>,
-        <Button value="recast">Recast</Button>,
+        <Button
+          value="like"
+          action={`/shared-account/${sharedAccountName}/cast/${hash}/react/like`}
+        >
+          Like
+        </Button>,
+        <Button
+          value="recast"
+          action={`/shared-account/${sharedAccountName}/cast/${hash}/react/reacast`}
+        >
+          Recast
+        </Button>,
       ],
     });
   } catch (error) {
@@ -664,6 +692,137 @@ app.frame("/shared-account/:sharedAccountName/cast/:hash", async (c) => {
     });
   }
 });
+
+app.frame(
+  "/shared-account/:sharedAccountName/cast/:hash/react/:type",
+  async (c) => {
+    const { frameData } = c;
+    const sharedAccountName = c.req.param("sharedAccountName");
+    const hash = c.req.param("hash");
+    const reactionType = c.req.param("type");
+
+    if (frameData === undefined) {
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    log.info(`frame data: ${JSON.stringify(frameData)}`);
+
+    const userFid = frameData.fid;
+    let sharedAccountFid: number;
+    let sharedAccountAddress: `0x${string}`;
+
+    try {
+      const {
+        result: { user: sharedAccount },
+      } = await neynarClient.lookupUserByUsername(sharedAccountName);
+
+      sharedAccountFid = sharedAccount.fid;
+      sharedAccountAddress = sharedAccount.custodyAddress as `0x${string}`;
+    } catch (error) {
+      if (isApiErrorResponse(error)) {
+        log.info("API Error", error.response.data);
+      } else {
+        log.info("Generic Error", error);
+      }
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    let casterHat: bigint;
+    try {
+      casterHat = await getCasterHat(sharedAccountAddress);
+    } catch (error) {
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    let validCasterAddresses: `0x${string}`[];
+
+    try {
+      const res = await neynarClient.fetchBulkUsers([userFid]);
+      const verifiedAddresses = res.users[0].verified_addresses
+        .eth_addresses as `0x${string}`[];
+      validCasterAddresses = await getValidCasterAddresses(
+        casterHat,
+        verifiedAddresses
+      );
+
+      if (validCasterAddresses.length === 0) {
+        return c.res({
+          image: (
+            <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+              Error: not a valid caster
+            </div>
+          ),
+          intents: [],
+        });
+      }
+    } catch (error) {
+      if (isApiErrorResponse(error)) {
+        log.info("API Error", error.response.data);
+      } else {
+        log.info("Generic Error", error);
+      }
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    const signer = await getSigner(sharedAccountFid, validCasterAddresses);
+    if (signer === null) {
+      return c.res({
+        image: (
+          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+            Error
+          </div>
+        ),
+        intents: [],
+      });
+    }
+
+    await neynarClient.publishReactionToCast(
+      signer.id,
+      reactionType === "like" ? ReactionType.Like : ReactionType.Recast,
+      hash
+    );
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Success!
+        </div>
+      ),
+      intents: [
+        <Button value="back" action={`/`}>
+          Back
+        </Button>,
+      ],
+    });
+  }
+);
 
 const port = Number(process.env.PORT) || 3000;
 console.log(`Server is running on port ${port}`);
