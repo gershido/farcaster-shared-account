@@ -197,9 +197,6 @@ app.frame("/shared-account/:name", async (c) => {
           </div>
         ),
         intents: [
-          <Button value="back" action={`/`}>
-            Back
-          </Button>,
           <Button.Link
             href={`https://app.hatsprotocol.xyz/trees/10/${hatIdToTreeId(
               casterHat
@@ -207,6 +204,9 @@ app.frame("/shared-account/:name", async (c) => {
           >
             Caster Hat
           </Button.Link>,
+          <Button value="back" action={`/`}>
+            Back
+          </Button>,
         ],
       });
     }
@@ -247,9 +247,6 @@ app.frame("/shared-account/:name", async (c) => {
           >
             Claim
           </Button>,
-          <Button value="back" action={`/`}>
-            Back
-          </Button>,
           <Button.Link
             href={`https://app.hatsprotocol.xyz/trees/10/${hatIdToTreeId(
               casterHat
@@ -257,6 +254,9 @@ app.frame("/shared-account/:name", async (c) => {
           >
             Caster Hat
           </Button.Link>,
+          <Button value="back" action={`/`}>
+            Back
+          </Button>,
         ],
       });
     }
@@ -293,9 +293,6 @@ app.frame("/shared-account/:name", async (c) => {
         >
           Cast
         </Button>,
-        <Button value="back" action={`/`}>
-          Back
-        </Button>,
         <Button.Link
           href={`https://app.hatsprotocol.xyz/trees/10/${hatIdToTreeId(
             casterHat
@@ -303,6 +300,9 @@ app.frame("/shared-account/:name", async (c) => {
         >
           Caster Hat
         </Button.Link>,
+        <Button value="back" action={`/`}>
+          Back
+        </Button>,
       ],
     });
   } catch (error) {
@@ -453,6 +453,85 @@ app.frame("/finish/:uuid", async (c) => {
   });
 });
 
+app.frame("/shared-account/:sharedAccountName/cast", async (c) => {
+  const { frameData } = c;
+
+  if (frameData === undefined || frameData.inputText === undefined) {
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Error
+        </div>
+      ),
+      intents: [],
+    });
+  }
+
+  const sharedAccountName = c.req.param("sharedAccountName");
+  const url = frameData.inputText;
+
+  log.info(`frame data: ${JSON.stringify(frameData, null, 2)}`);
+
+  try {
+    const { cast } = await neynarClient.lookUpCastByHashOrWarpcastUrl(
+      url,
+      CastParamType.Url
+    );
+
+    return c.res({
+      image: (
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            fontSize: 60,
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ color: "white", display: "flex" }}>
+            Author user name: {cast.author.username}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Text: {cast.text}
+          </div>
+          <div style={{ color: "white", display: "flex" }}>
+            Hash: {cast.hash}
+          </div>
+        </div>
+      ),
+      intents: [
+        <Button
+          value="cast"
+          action={`/shared-account/${sharedAccountName}/cast/${cast.hash}`}
+        >
+          Continue
+        </Button>,
+        <Button value="back" action={`/`}>
+          Back
+        </Button>,
+      ],
+    });
+  } catch (error) {
+    if (isApiErrorResponse(error)) {
+      log.info("API Error", error.response.data);
+    } else {
+      log.info("Generic Error", error);
+    }
+    return c.res({
+      image: (
+        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          Invalid cast url
+        </div>
+      ),
+      intents: [
+        <Button value="back" action={`/`}>
+          Back
+        </Button>,
+      ],
+    });
+  }
+});
+
 /*
 app.frame(
   "/shared-account/:sharedAccountName/cast/:castUser/:castHash",
@@ -573,124 +652,6 @@ app.frame(
     }
   }
 );
-*/
-
-/*
-app.frame("/shared-account/:sharedAccountName/cast", async (c) => {
-  const { frameData } = c;
-
-  if (frameData === undefined || frameData.inputText === undefined) {
-    return c.res({
-      image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Error
-        </div>
-      ),
-      intents: [],
-    });
-  }
-
-  const sharedAccountName = c.req.param("sharedAccountName");
-  const url = frameData.inputText;
-
-  log.info(`frame data: ${JSON.stringify(frameData, null, 2)}`);
-
-  const userFid = frameData.fid;
-  let sharedAccountFid: number | undefined;
-  let sharedAccountAddress: `0x${string}` | undefined;
-
-  try {
-    const { result: sharedAccountResult } =
-      await neynarClient.lookupUserByUsername(sharedAccountName);
-    const { user: sharedAccount } = sharedAccountResult;
-    sharedAccountFid = sharedAccount.fid;
-    sharedAccountAddress = sharedAccount.custodyAddress as `0x${string}`;
-  } catch (error) {
-    if (isApiErrorResponse(error)) {
-      log.info("API Error", error.response.data);
-    } else {
-      log.info("Generic Error", error);
-    }
-    return c.res({
-      image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Error
-        </div>
-      ),
-      intents: [],
-    });
-  }
-
-  let validCasterAddresses: `0x${string}`[] | undefined;
-
-  try {
-    const res = await neynarClient.fetchBulkUsers([userFid]);
-    const verifiedAddresses = res.users[0].verified_addresses
-      .eth_addresses as `0x${string}`[];
-    validCasterAddresses = await getValidCasterAddresses(
-      sharedAccountAddress as `0x${string}`,
-      verifiedAddresses
-    );
-
-    if (validCasterAddresses.length === 0) {
-      return c.res({
-        image: (
-          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-            Error: not a valid caster
-          </div>
-        ),
-        intents: [],
-      });
-    }
-  } catch (error) {
-    if (isApiErrorResponse(error)) {
-      log.info("API Error", error.response.data);
-    } else {
-      log.info("Generic Error", error);
-    }
-    return c.res({
-      image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Error
-        </div>
-      ),
-      intents: [],
-    });
-  }
-
-  try {
-    const { cast } = await neynarClient.lookUpCastByHashOrWarpcastUrl(
-      url,
-      CastParamType.Url
-    );
-
-    log.info(`cast details: ${JSON.stringify(cast)}`);
-
-    return c.res({
-      image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          author username: {cast.author.username} author fid: {cast.author.fid}{" "}
-          cast hash: {cast.hash}
-        </div>
-      ),
-      intents: [<Button value="like">Like</Button>],
-    });
-  } catch (error) {
-    if (isApiErrorResponse(error)) {
-      log.info("API Error", error.response.data);
-    } else {
-      log.info("Generic Error", error);
-    }
-    return c.res({
-      image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
-          Error
-        </div>
-      ),
-      intents: [],
-    });
-  }
-});
 */
 
 const port = Number(process.env.PORT) || 3000;
