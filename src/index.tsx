@@ -114,11 +114,19 @@ app.frame("/shared-account/check", async (c) => {
             display: "flex",
             fontSize: 60,
             flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
-          <div>User name: {sharedAccount.username}</div>
-          <div>FID: {sharedAccount.fid}</div>
-          <div>Address: {sharedAccount.custodyAddress}</div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            User name: {sharedAccount.username}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            FID: {sharedAccount.fid}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            Address: {sharedAccount.custodyAddress}
+          </div>
         </div>
       ),
       intents: [
@@ -204,10 +212,18 @@ app.frame("/shared-account/:name", async (c) => {
               height: "100vh",
             }}
           >
-            <div>User name: {sharedAccount.username}</div>
-            <div>FID: {sharedAccount.fid}</div>
-            <div>Address: {sharedAccount.custodyAddress}</div>
-            <div>Only wearers of the caster Hat can use this account</div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              User name: {sharedAccount.username}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              FID: {sharedAccount.fid}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              Address: {sharedAccount.custodyAddress}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              Only wearers of the caster Hat can use this account
+            </div>
           </div>
         ),
         intents: [
@@ -243,10 +259,16 @@ app.frame("/shared-account/:name", async (c) => {
               height: "100vh",
             }}
           >
-            <div>User name: {sharedAccount.username}</div>
-            <div>FID: {sharedAccount.fid}</div>
-            <div>Address: {sharedAccount.custodyAddress}</div>
-            <div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              User name: {sharedAccount.username}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              FID: {sharedAccount.fid}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              Address: {sharedAccount.custodyAddress}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
               Claim casting authority and start using the shared account
             </div>
           </div>
@@ -285,10 +307,18 @@ app.frame("/shared-account/:name", async (c) => {
             height: "100vh",
           }}
         >
-          <div>User name: {sharedAccount.username}</div>
-          <div>FID: {sharedAccount.fid}</div>
-          <div>Address: {sharedAccount.custodyAddress}</div>
-          <div>Use the shared account by choosing a cast to respond to</div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            User name: {sharedAccount.username}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            FID: {sharedAccount.fid}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            Address: {sharedAccount.custodyAddress}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            Use the shared account by choosing a cast to respond to
+          </div>
         </div>
       ),
       intents: [
@@ -360,9 +390,15 @@ app.frame("/shared-account/:name/register/:address", async (c) => {
             height: "100vh",
           }}
         >
-          <div>User name: {sharedAccount.username}</div>
-          <div>FID: {sharedAccount.fid}</div>
-          <div>Address to register: {address}</div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            User name: {sharedAccount.username}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            FID: {sharedAccount.fid}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            Address to register: {address}
+          </div>
         </div>
       ),
       intents: [
