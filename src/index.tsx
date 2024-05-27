@@ -185,8 +185,6 @@ app.frame("/shared-account/:name", async (c) => {
       result: { user: sharedAccount },
     } = await neynarClient.lookupUserByUsername(sharedAccountName);
 
-    // log.info(`sharedAccount: ${JSON.stringify(sharedAccount, null, 2)}`);
-
     const { users } = await neynarClient.fetchBulkUsers([frameData.fid]);
     const user = users[0];
 
@@ -207,18 +205,19 @@ app.frame("/shared-account/:name", async (c) => {
               display: "flex",
               fontSize: 60,
               flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100vh",
             }}
           >
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex" }}>
               User name: {sharedAccount.username}
             </div>
-            <div style={{ color: "white", display: "flex" }}>
-              FID: {sharedAccount.fid}
-            </div>
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex" }}>FID: {sharedAccount.fid}</div>
+            <div style={{ display: "flex" }}>
               Address: {sharedAccount.custodyAddress}
             </div>
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex" }}>
               Only wearers of the caster Hat can use this account
             </div>
           </div>
