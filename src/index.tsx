@@ -42,9 +42,10 @@ app.frame("/", async (c) => {
           alignItems: "center",
           fontSize: 50,
           flexDirection: "column",
+          height: "100vh",
         }}
       >
-        <div>Select by user name</div>
+        <div>Select a shared account by its user name</div>
       </div>
     ),
     intents: [
@@ -87,7 +88,17 @@ app.frame("/shared-account/check", async (c) => {
     if (!isSharedAccout) {
       return c.res({
         image: (
-          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          <div
+            style={{
+              color: "white",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: 60,
+              height: "100vh",
+            }}
+          >
             The user is not a shared account
           </div>
         ),
@@ -103,8 +114,14 @@ app.frame("/shared-account/check", async (c) => {
             display: "flex",
             fontSize: 60,
             flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
           }}
         >
+          <div>
+            <img src={`${sharedAccount.pfp}`} />
+          </div>
           <div style={{ color: "white", display: "flex" }}>
             User name: {sharedAccount.username}
           </div>
@@ -133,7 +150,16 @@ app.frame("/shared-account/check", async (c) => {
     }
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            fontSize: 60,
+            flexDirection: "column",
+            justifyContent: "center",
+            height: "100vh",
+          }}
+        >
           The user was not found
         </div>
       ),
