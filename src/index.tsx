@@ -212,16 +212,16 @@ app.frame("/shared-account/:name", async (c) => {
               height: "100vh",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               User name: {sharedAccount.username}
             </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               FID: {sharedAccount.fid}
             </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               Address: {sharedAccount.custodyAddress}
             </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               Only wearers of the caster Hat can use this account
             </div>
           </div>
@@ -259,16 +259,16 @@ app.frame("/shared-account/:name", async (c) => {
               height: "100vh",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               User name: {sharedAccount.username}
             </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               FID: {sharedAccount.fid}
             </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               Address: {sharedAccount.custodyAddress}
             </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               Claim casting authority and start using the shared account
             </div>
           </div>
@@ -307,16 +307,16 @@ app.frame("/shared-account/:name", async (c) => {
             height: "100vh",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             User name: {sharedAccount.username}
           </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             FID: {sharedAccount.fid}
           </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             Address: {sharedAccount.custodyAddress}
           </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             Use the shared account by choosing a cast to respond to
           </div>
         </div>
@@ -390,13 +390,13 @@ app.frame("/shared-account/:name/register/:address", async (c) => {
             height: "100vh",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             User name: {sharedAccount.username}
           </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             FID: {sharedAccount.fid}
           </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             Address to register: {address}
           </div>
         </div>
