@@ -856,7 +856,17 @@ app.frame(
     );
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: 60,
+            flexDirection: "column",
+            height: "100vh",
+          }}
+        >
           Success!
         </div>
       ),
