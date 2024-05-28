@@ -38,11 +38,14 @@ app.frame("/", async (c) => {
         style={{
           color: "white",
           display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           fontSize: 50,
           flexDirection: "column",
+          height: "100vh",
         }}
       >
-        <div>Select by user name</div>
+        <div>Select a shared account by its user name</div>
       </div>
     ),
     intents: [
@@ -85,7 +88,17 @@ app.frame("/shared-account/check", async (c) => {
     if (!isSharedAccout) {
       return c.res({
         image: (
-          <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+          <div
+            style={{
+              color: "white",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: 60,
+              height: "100vh",
+            }}
+          >
             The user is not a shared account
           </div>
         ),
@@ -99,17 +112,18 @@ app.frame("/shared-account/check", async (c) => {
           style={{
             color: "white",
             display: "flex",
-            fontSize: 60,
+            fontSize: 50,
             flexDirection: "column",
+            justifyContent: "center",
           }}
         >
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             User name: {sharedAccount.username}
           </div>
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             FID: {sharedAccount.fid}
           </div>
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             Address: {sharedAccount.custodyAddress}
           </div>
         </div>
@@ -131,7 +145,16 @@ app.frame("/shared-account/check", async (c) => {
     }
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            fontSize: 60,
+            flexDirection: "column",
+            justifyContent: "center",
+            height: "100vh",
+          }}
+        >
           The user was not found
         </div>
       ),
@@ -162,8 +185,6 @@ app.frame("/shared-account/:name", async (c) => {
       result: { user: sharedAccount },
     } = await neynarClient.lookupUserByUsername(sharedAccountName);
 
-    // log.info(`sharedAccount: ${JSON.stringify(sharedAccount, null, 2)}`);
-
     const { users } = await neynarClient.fetchBulkUsers([frameData.fid]);
     const user = users[0];
 
@@ -182,20 +203,22 @@ app.frame("/shared-account/:name", async (c) => {
             style={{
               color: "white",
               display: "flex",
-              fontSize: 60,
+              fontSize: 50,
               flexDirection: "column",
+              justifyContent: "center",
+              height: "100vh",
             }}
           >
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               User name: {sharedAccount.username}
             </div>
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               FID: {sharedAccount.fid}
             </div>
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               Address: {sharedAccount.custodyAddress}
             </div>
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               Only wearers of the caster Hat can use this account
             </div>
           </div>
@@ -226,20 +249,22 @@ app.frame("/shared-account/:name", async (c) => {
             style={{
               color: "white",
               display: "flex",
-              fontSize: 60,
+              fontSize: 50,
               flexDirection: "column",
+              justifyContent: "center",
+              height: "100vh",
             }}
           >
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               User name: {sharedAccount.username}
             </div>
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               FID: {sharedAccount.fid}
             </div>
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               Address: {sharedAccount.custodyAddress}
             </div>
-            <div style={{ color: "white", display: "flex" }}>
+            <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
               Claim casting authority and start using the shared account
             </div>
           </div>
@@ -271,20 +296,22 @@ app.frame("/shared-account/:name", async (c) => {
           style={{
             color: "white",
             display: "flex",
-            fontSize: 60,
+            fontSize: 50,
             flexDirection: "column",
+            justifyContent: "center",
+            height: "100vh",
           }}
         >
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             User name: {sharedAccount.username}
           </div>
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             FID: {sharedAccount.fid}
           </div>
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             Address: {sharedAccount.custodyAddress}
           </div>
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             Use the shared account by choosing a cast to respond to
           </div>
         </div>
@@ -344,15 +371,6 @@ app.frame("/shared-account/:name/register/:address", async (c) => {
 
     log.info(`signer: ${JSON.stringify(signer, null, 2)}`);
 
-    // await prismaClient.signer.create({
-    //   data: {
-    //     id: signer.signer_uuid,
-    //     ethAddr: "0x",
-    //     eddsaKey: signer.public_key,
-    //     fid: sharedAccount.fid.toString(),
-    //   },
-    // });
-
     return c.res({
       action: `/finish/${signer.signer_uuid}`,
       image: (
@@ -362,15 +380,17 @@ app.frame("/shared-account/:name/register/:address", async (c) => {
             display: "flex",
             fontSize: 60,
             flexDirection: "column",
+            justifyContent: "center",
+            height: "100vh",
           }}
         >
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             User name: {sharedAccount.username}
           </div>
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             FID: {sharedAccount.fid}
           </div>
-          <div style={{ color: "white", display: "flex" }}>
+          <div style={{ display: "flex", margin: "10px", flexWrap: "wrap" }}>
             Address to register: {address}
           </div>
         </div>
@@ -409,7 +429,6 @@ app.transaction("/claim/:sharedAccountAddress/:key", async (c) => {
 
   const metadata = await getMetadata(key);
 
-  // Contract transaction response.
   return c.contract({
     abi: HATS_FARCASTER_DELEGATOR_ABI,
     chainId: "eip155:10",
@@ -427,9 +446,6 @@ app.frame("/finish/:uuid", async (c) => {
     hash: transactionId as `0x${string}`,
   });
 
-  // log.info(`transaction.from: ${receipt.from}`);
-  // log.info(`transaction.to: ${receipt.to}`);
-
   const event = decodeEventLog({
     abi: KEY_ADD_EVENT_ABI,
     eventName: "Add",
@@ -445,8 +461,6 @@ app.frame("/finish/:uuid", async (c) => {
       fid: event.args.fid.toString(),
     },
   });
-
-  // log.info(`transaction.to: ${event.args.fid}`);
 
   return c.res({
     image: (
@@ -488,18 +502,33 @@ app.frame("/shared-account/:sharedAccountName/cast", async (c) => {
           style={{
             color: "white",
             display: "flex",
-            fontSize: 60,
+            fontSize: 40,
             flexDirection: "column",
+            height: "100vh",
+            width: "100vw",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
-          <div style={{ color: "white", display: "flex" }}>
-            Author user name: {cast.author.username}
-          </div>
-          <div style={{ color: "white", display: "flex" }}>
-            Text: {cast.text}
-          </div>
-          <div style={{ color: "white", display: "flex" }}>
-            Hash: {cast.hash}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              width: "60%",
+              alignItems: "center",
+              backgroundColor: "yellow",
+            }}
+          >
+            <img
+              src={`https://client.warpcast.com/v2/cast-image?castHash=${cast.hash}`}
+              style={{
+                objectFit: "fill",
+                width: "100%",
+                height: "100%",
+              }}
+            />
           </div>
         </div>
       ),
@@ -646,18 +675,34 @@ app.frame("/shared-account/:sharedAccountName/cast/:hash", async (c) => {
           style={{
             color: "white",
             display: "flex",
-            fontSize: 60,
+            fontSize: 40,
             flexDirection: "column",
+            height: "100vh",
+            width: "100vw",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
-          <div style={{ color: "white", display: "flex" }}>
-            Author user name: {cast.author.username}
-          </div>
-          <div style={{ color: "white", display: "flex" }}>
-            Text: {cast.text}
-          </div>
-          <div style={{ color: "white", display: "flex" }}>
-            Hash: {cast.hash}
+          <div>{`Replying as @${sharedAccountName}`}</div>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              width: "60%",
+              alignItems: "center",
+              backgroundColor: "yellow",
+            }}
+          >
+            <img
+              src={`https://client.warpcast.com/v2/cast-image?castHash=${hash}`}
+              style={{
+                objectFit: "fill",
+                width: "100%",
+                height: "100%",
+              }}
+            />
           </div>
         </div>
       ),
@@ -811,7 +856,17 @@ app.frame(
     );
     return c.res({
       image: (
-        <div style={{ color: "white", display: "flex", fontSize: 60 }}>
+        <div
+          style={{
+            color: "white",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: 60,
+            flexDirection: "column",
+            height: "100vh",
+          }}
+        >
           Success!
         </div>
       ),
